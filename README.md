@@ -1,0 +1,1 @@
+Obsidian plugin for downloading RSS posts as notes.
