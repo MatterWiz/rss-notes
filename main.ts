@@ -46,7 +46,7 @@ export default class RSSNotes extends Plugin {
 				let noteText = `---\n`
 
 				//Adding title
-				noteText += `title: ${item.title}\n`
+				noteText += `title: ${item.title?.replaceAll(":", " -")}\n`
 
 				//Adding Autors
 				noteText += `authors:\n`
