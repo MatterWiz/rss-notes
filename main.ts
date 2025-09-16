@@ -36,33 +36,37 @@ export default class RSSNotes extends Plugin {
 			this.app.vault.createFolder(feedPath)
 		}
 
-		//console.log(feed)
+		console.log(feed)
 		for (let item of feed.items) {
 			//console.log(item)
 
 			let filePath = `${feedPath}/${this.escapeForPath(item.title)}_${item.published?.getTime()}.md`
 			if (this.app.vault.getFileByPath(filePath) === null) {
 				//Building Note text
+				let tags = []
 				let noteText = `---\n`
 
 				//Adding title
-				noteText += `title: ${item.title?.replaceAll(":", " -")}\n`
+				noteText += `title: "${item.title?.replaceAll('"', "'")}"\n`
 
 				//Adding Autors
 				noteText += `authors:\n`
 				for (let author of item.authors) {
 					noteText += ` - ${author.name}\n`
+					tags.push(author.name)
 				}
 
 				//Adding cathegories
 				noteText += `cathegories:\n`
 				for (let cathegory of item.categories) {
-					noteText += ` - ${cathegory.label}\n`
+					if (cathegory.label != null && !["Uncategorized"].includes(cathegory.label))
+						noteText += ` - ${cathegory.label.replaceAll(":", " -")}\n`
+					tags.push(cathegory.label?.replaceAll(":", " -"))
 				}
 
 				//Adding description
 				if (typeof item.description === "string") {
-					noteText += `desciption: "${htmlToMarkdown(item.description).replaceAll("\n", "<br>").replaceAll(`"`, "'")}"\n`
+					noteText += `description: "${htmlToMarkdown(item.description).replaceAll("\n", "<br>").replaceAll(`"`, "'")}"\n`
 				}
 				else { noteText += `description: \n` }
 
@@ -86,6 +90,11 @@ export default class RSSNotes extends Plugin {
 					noteText += `cover: ${feed.image.url}\n`
 				}
 
+				noteText += `tags: \n - ${this.escapeForTag(feed.title)}\n`
+				for (let tag of tags) {
+					noteText += ` - ${this.escapeForTag(tag)}\n`
+				}
+
 				noteText += `---\n`
 
 				//Adding text
@@ -102,7 +111,7 @@ export default class RSSNotes extends Plugin {
 		if (f != null) {
 			let feedFileText = `---
 description: ${feed.description}
-url: ${feed.self}
+url: ${url}
 updated: ${feed.updated?.toISOString()}
 lastChecked: ${new Date().toISOString()}
 ---
@@ -137,7 +146,22 @@ views:
 
 	escapeForPath(text: string | null) {
 		if (typeof text === "string") {
-			return text.replaceAll(":", " -").replaceAll("/", "-").replaceAll("\\", "-")
+			return text.replaceAll(":", " -")
+				.replaceAll("/", "-")
+				.replaceAll("\\", "-")
+				.replaceAll('"', "'")
+				.replaceAll("<", "-")
+				.replaceAll(">", "-")
+				.replaceAll("|", "-")
+				.replaceAll("?", "-")
+				.replaceAll("*", "-")
+		}
+		else { return "" }
+	}
+
+	escapeForTag(text: string | null | undefined) {
+		if (typeof text === "string") {
+			return text.replaceAll(/[^0-9a-zA-Z_\- ]/g, "-").replaceAll(" ", "_")
 		}
 		else { return "" }
 	}
